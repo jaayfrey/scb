@@ -31,8 +31,6 @@ public class RSA {
     public static String decryptRsaWithPrivateKey(String encryptedString, String privateKeyString,
             String password) {
         try {
-            System.out.println(encryptedString);
-            System.out.println(privateKeyString);
             EncryptedPrivateKeyInfo ePKInfo = new EncryptedPrivateKeyInfo(
                     Base64.decodeBase64(privateKeyString.getBytes()));
             Cipher cipher = Cipher.getInstance(ePKInfo.getAlgName());

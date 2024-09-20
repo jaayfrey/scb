@@ -40,14 +40,14 @@ public class Main {
         String encryptedRandomKey = encryptRsaWithPublicKey(
                 secret.getRandomKey(), secret.getPublicKey(true));
 
+        System.out.println("\nRequest Body: \n" + notifyRequest);
+
         System.out.println("\nEncrypted Request Body: ");
         System.out.println(COLORS.ANSI_BLUE + "\"corpid\": \"MYQASPL1\"" + COLORS.ANSI_RESET);
         System.out.println(COLORS.ANSI_RED + "\"notifyreq\": " + "\"" + encryptedPayload + "\""
                 + COLORS.ANSI_RESET);
         System.out.println(COLORS.ANSI_BLUE +
                 "\"enc_key\": " + "\"" + encryptedRandomKey + "\"" + COLORS.ANSI_RESET);
-
-        System.out.println(notifyRequest);
 
         String decryptedRandomKey = decryptRsaWithPrivateKey(encryptedRandomKey,
                 secret.getPrivateKey(true),
