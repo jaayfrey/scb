@@ -1,9 +1,15 @@
 package org.qashier.s2b.entities;
 
+import static org.qashier.s2b.crypto.AES.doAES256CBCEncryption;
+import static org.qashier.s2b.crypto.RSA.encryptRsaWithPublicKey;
+
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.qashier.s2b.crypto.SHA256;
 import org.qashier.s2b.entities.ScbSecret.PaymentMethod;
+import org.qashier.utils.Log;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -50,13 +56,18 @@ public class ScbRequest {
     private String txnId = "24031036051";
     @Builder.Default
     private String txnType = "NEW";
-    @Builder.Default
-    private String hash = "";
+
+    private ScbSecret secret;
+    private Map<String, String> requestParams;
 
     // DuitNow QR
-    public String toDuitNowQrDynamicPayload() throws IOException {
+    public void toDuitNowQrDynamicPayload() {
 
-        ScbSecret secret = new ScbSecret(PaymentMethod.DuitNowSCBSecrets);
+        try {
+            secret = new ScbSecret(PaymentMethod.DuitNowSCBSecrets);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         String data = "amt=" + amount +
                 "&ccy=" + currency +
@@ -77,19 +88,19 @@ public class ScbRequest {
                 "&txnid=" + txnId +
                 "&txntype=" + txnType;
 
-        try {
-            hash = SHA256.hmac(data, secret.getRandomKey());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        this.requestParams = buildRequestParams(data, secret);
 
-        return data + "&hash=" + hash;
+        requestParams.put("corpid", "MYQASPL1");
     }
 
     // DuitNow QR Soundbox
-    public String toDuitNowStaticQrPayload() throws IOException {
+    public void toDuitNowStaticQrPayload() {
 
-        ScbSecret secret = new ScbSecret(PaymentMethod.DuitNowSCBSecrets);
+        try {
+            secret = new ScbSecret(PaymentMethod.DuitNowSCBSecrets);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         String data = "amt=" + amount +
                 "&ccy=" + currency +
@@ -108,19 +119,19 @@ public class ScbRequest {
                 "&txnid=" + txnId +
                 "&txntype=" + txnType;
 
-        try {
-            hash = SHA256.hmac(data, secret.getRandomKey());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        this.requestParams = buildRequestParams(data, secret);
 
-        return data + "&hash=" + hash;
+        requestParams.put("corpid", "MYQASPL1");
     }
 
     // PayNow QR
-    public String toPayNowQrDynamicPayload() throws IOException {
+    public void toPayNowQrDynamicPayload() {
 
-        ScbSecret secret = new ScbSecret(PaymentMethod.PayNowSecrets);
+        try {
+            secret = new ScbSecret(PaymentMethod.PayNowSecrets);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         String data = "amt=" + amount +
                 "&ccy=" + currency +
@@ -141,19 +152,19 @@ public class ScbRequest {
                 "&txnid=" + txnId +
                 "&txntype=" + txnType;
 
-        try {
-            hash = SHA256.hmac(data, secret.getRandomKey());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        this.requestParams = buildRequestParams(data, secret);
 
-        return data + "&hash=" + hash;
+        requestParams.put("corpid", "SGQASPL1");
     }
 
     // PayNow QR Soundbox
-    public String toPaynowStaticQrPayload() throws IOException {
+    public void toPaynowStaticQrPayload() {
 
-        ScbSecret secret = new ScbSecret(PaymentMethod.PayNowSecrets);
+        try {
+            secret = new ScbSecret(PaymentMethod.PayNowSecrets);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         String data = "amt=" + amount +
                 "&ccy=" + currency +
@@ -170,12 +181,71 @@ public class ScbRequest {
                 "&txnid=" + txnId +
                 "&txntype=" + txnType;
 
+        this.requestParams = buildRequestParams(data, secret);
+
+        requestParams.put("corpid", "SGQASPL1");
+    }
+
+    private Map<String, String> buildRequestParams(String data, ScbSecret secret) {
         try {
-            hash = SHA256.hmac(data, secret.getRandomKey());
+
+            String hash = SHA256.hmac(data, secret.getRandomKey());
+
+            String notifyRequest = data + "&hash=" + hash;
+
+            String encryptedPayload = doAES256CBCEncryption(
+                    notifyRequest,
+                    secret.getRandomKey());
+
+            String encryptedRandomKey = encryptRsaWithPublicKey(
+                    secret.getRandomKey(), secret.getPublicKey(true));
+
+            Log.white("\nRaw Notify Request: ");
+            Log.yellow(notifyRequest);
+
+            Map<String, String> requestParams = new HashMap<>();
+            requestParams.put("notifyreq", encryptedPayload);
+            requestParams.put("enc_key", encryptedRandomKey);
+
+            return requestParams;
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return data + "&hash=" + hash;
+        return null;
+    }
+
+    public String toJson() {
+        StringBuilder jsonPayload = new StringBuilder("{");
+
+        this.requestParams.keySet().forEach(key -> {
+            jsonPayload.append("\"").append(key).append("\"").append(": ")
+                    .append("\"").append(this.requestParams.get(key)).append("\", ");
+        });
+
+        if (jsonPayload.length() > 1) {
+            jsonPayload.setLength(jsonPayload.length() - 2);
+        }
+
+        jsonPayload.append("}");
+
+        return jsonPayload.toString();
+
+    }
+
+    public String toXml() {
+
+        StringBuilder xmlPayload = new StringBuilder(
+                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<xml>");
+
+        this.requestParams.keySet().forEach(key -> {
+            xmlPayload.append("<").append(key).append(">").append(this.requestParams.get(key))
+                    .append("</").append(key).append(">");
+        });
+
+        xmlPayload.append("</xml>");
+
+        return xmlPayload.toString();
+
     }
 }

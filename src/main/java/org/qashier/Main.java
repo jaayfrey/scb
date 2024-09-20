@@ -1,64 +1,52 @@
 package org.qashier;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 
-import org.qashier.constants.COLORS;
+import org.qashier.s2b.crypto.AES;
+import org.qashier.s2b.crypto.RSA;
 import org.qashier.s2b.entities.ScbRequest;
 import org.qashier.s2b.entities.ScbSecret;
-import org.qashier.s2b.entities.ScbSecret.PaymentMethod;
-
-import static org.qashier.s2b.crypto.AES.doAES256CBCDecryption;
-import static org.qashier.s2b.crypto.AES.doAES256CBCEncryption;
-import static org.qashier.s2b.crypto.RSA.decryptRsaWithPrivateKey;
-import static org.qashier.s2b.crypto.RSA.encryptRsaWithPublicKey;
+import org.qashier.utils.Log;
 
 public class Main {
-    public static void main(String[] args)
-            throws InvalidAlgorithmParameterException, NoSuchPaddingException,
-            IllegalBlockSizeException, IOException, NoSuchAlgorithmException,
-            BadPaddingException, InvalidKeyException {
+    public static void main(String[] args) {
 
-        // String rawSecret = firebaseSecretManager.getSecret("PayNowSecrets");
+        boolean __TEST__ = true;
 
-        ScbSecret secret = new ScbSecret(PaymentMethod.PayNowSecrets);
+        ScbRequest scbRequest = ScbRequest.builder().amount("fs").currency("SGD")
+                .build();
 
-        String notifyRequest = ScbRequest.builder().amount("fs").currency("SGD").hash("fsf")
-                .build().toPayNowQrDynamicPayload();
+        scbRequest.toDuitNowQrDynamicPayload();
 
-        // Encrypt key-value payload/request parameters with random key
-        System.out.println(secret.getRandomKey());
-        System.out.println(secret.getPublicKey(true));
-        String encryptedPayload = doAES256CBCEncryption(
-                notifyRequest,
-                secret.getRandomKey());
-        String encryptedRandomKey = encryptRsaWithPublicKey(
-                secret.getRandomKey(), secret.getPublicKey(true));
+        Log.white("\nJSON Request Body: ");
+        Log.green(scbRequest.toJson());
 
-        System.out.println("\nRequest Body: \n" + notifyRequest);
+        Log.white("\nXML Request Body: ");
+        Log.purple(scbRequest.toXml());
 
-        System.out.println("\nEncrypted Request Body: ");
-        System.out.println(COLORS.ANSI_BLUE + "\"corpid\": \"MYQASPL1\"" + COLORS.ANSI_RESET);
-        System.out.println(COLORS.ANSI_RED + "\"notifyreq\": " + "\"" + encryptedPayload + "\""
-                + COLORS.ANSI_RESET);
-        System.out.println(COLORS.ANSI_BLUE +
-                "\"enc_key\": " + "\"" + encryptedRandomKey + "\"" + COLORS.ANSI_RESET);
+        // testing decryption
+        if (__TEST__) {
 
-        String decryptedRandomKey = decryptRsaWithPrivateKey(encryptedRandomKey,
-                secret.getPrivateKey(true),
-                secret.getPassphrase());
-        // Decrypt encrypted payload with the decrypted random key
-        String decryptedPayload = doAES256CBCDecryption(encryptedPayload,
-                decryptedRandomKey);
+            Map<String, String> requestParams = scbRequest.getRequestParams();
+            ScbSecret secret = scbRequest.getSecret();
 
-        System.out.println("\nDecrypted Request Body: ");
-        System.out.println("notifyreq: " + decryptedPayload);
-        System.out.println("enc_key: " + decryptedRandomKey);
+            try {
+                String decryptedRandomKey = RSA.decryptRsaWithPrivateKey(
+                        requestParams.get("enc_key"),
+                        secret.getPrivateKey(true),
+                        secret.getPassphrase());
+
+                String decryptedPayload = AES.doAES256CBCDecryption(requestParams.get("notifyreq"),
+                        decryptedRandomKey);
+
+                Log.white("\nDecrypted Request Body: ");
+                Log.red("notifyreq: " + decryptedPayload);
+                Log.blue("enc_key: " + decryptedRandomKey);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
 }

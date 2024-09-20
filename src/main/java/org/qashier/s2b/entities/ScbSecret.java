@@ -2,8 +2,8 @@ package org.qashier.s2b.entities;
 
 import java.io.IOException;
 
-import org.qashier.constants.COLORS;
 import org.qashier.firebase.SecretManager;
+import org.qashier.utils.Log;
 
 import com.google.gson.Gson;
 
@@ -32,20 +32,23 @@ final public class ScbSecret {
         this.publicKey = scbSecret.publicKey;
         this.privateKey = scbSecret.privateKey;
 
-        System.out
-                .println(COLORS.ANSI_BLUE
-                        + "------------------------------------------------------------------"
-                        + COLORS.ANSI_RESET);
-        System.out
-                .println(COLORS.ANSI_GREEN + "passphrase:\n" + this.passphrase + COLORS.ANSI_RESET);
-        System.out.println(COLORS.ANSI_RED + "secretKey:\n" + this.secretKey + COLORS.ANSI_RESET);
-        System.out.println(COLORS.ANSI_GREEN + "iv:\n" + this.iv + COLORS.ANSI_RESET);
-        System.out.println(COLORS.ANSI_RED + "publicKey:\n" + this.publicKey + COLORS.ANSI_RESET);
-        System.out
-                .println(COLORS.ANSI_GREEN + "privateKey:\n" + this.privateKey + COLORS.ANSI_RESET);
-        System.out.println(COLORS.ANSI_BLUE
-                + "------------------------------------------------------------------\n"
-                + COLORS.ANSI_RESET);
+        Log.blue("------------------------------------------------------------------");
+        Log.white("passphrase:");
+        Log.cyan(this.passphrase + "\n");
+
+        Log.white("secretKey:");
+        Log.red(this.secretKey + "\n");
+
+        Log.white("iv:");
+        Log.cyan(this.iv + "\n");
+
+        Log.white("publicKey:");
+        Log.red(this.publicKey + "\n");
+
+        Log.white("privateKey:");
+        Log.cyan(this.privateKey + "\n");
+
+        Log.blue("------------------------------------------------------------------");
     }
 
     public String getPassphrase() {
