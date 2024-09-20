@@ -20,7 +20,11 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.11")
     implementation("com.google.code.gson:gson:2.8.2")
 
-//    implementation("org.springframework.boot:spring-boot-starter-web")
+    // Lombok dependency
+    compileOnly("org.projectlombok:lombok:1.18.24")
+    annotationProcessor("org.projectlombok:lombok:1.18.24")
+
+    //implementation("org.springframework.boot:spring-boot-starter-web")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
