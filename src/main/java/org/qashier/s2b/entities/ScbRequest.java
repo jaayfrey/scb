@@ -4,6 +4,9 @@ import static org.qashier.s2b.crypto.AES.doAES256CBCEncryption;
 import static org.qashier.s2b.crypto.RSA.encryptRsaWithPublicKey;
 
 import java.io.IOException;
+import java.math.BigInteger;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +34,7 @@ public class ScbRequest {
     @Builder.Default
     private String date = "10092024144138";
     @Builder.Default
-    private String opTxnId = "20240910DBSSSGSGBRT7750559"; // scbTransactionId
+    private String opTxnId = "opTxnId"; // scbTransactionId
     @Builder.Default
     private String payerBankCode = "DBSSSGSG";
     @Builder.Default
@@ -61,13 +64,26 @@ public class ScbRequest {
     private Map<String, String> requestParams;
 
     // DuitNow QR
-    public void toDuitNowQrDynamicPayload() {
+    public void toDuitNowQrDynamicPayload(String clientId, String storeId, String paymentRecordId) {
 
         try {
             secret = new ScbSecret(PaymentMethod.DuitNowSCBSecrets);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        country = "MY";
+        currency = "MYR";
+        corpId = "MYQASPL1";
+        pspId = "MYDUITQR";
+
+        corpRef = paymentRecordId;
+        ref1 = paymentRecordId;
+        ref2 = clientId;
+        ref3 = storeId;
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("ddMMyyyyHHmmss");
+        date = simpleDateFormat.format(new Date());
 
         String data = "amt=" + amount +
                 "&ccy=" + currency +
@@ -94,13 +110,27 @@ public class ScbRequest {
     }
 
     // DuitNow QR Soundbox
-    public void toDuitNowStaticQrPayload() {
+    public void toDuitNowStaticQrPayload(String clientId, String storeId) {
 
         try {
             secret = new ScbSecret(PaymentMethod.DuitNowSCBSecrets);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        country = "MY";
+        currency = "MYR";
+        corpId = "MYQASPL1";
+        pspId = "MYDUITQR";
+
+        String caseBinary = convertToCaseBinary(clientId);
+        String caseBase64 = binaryToBase36(caseBinary);
+
+        ref1 = caseBase64.toUpperCase() + clientId.toUpperCase();
+        ref2 = "QSBS-" + storeId;
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("ddMMyyyyHHmmss");
+        date = simpleDateFormat.format(new Date());
 
         String data = "amt=" + amount +
                 "&ccy=" + currency +
@@ -125,13 +155,26 @@ public class ScbRequest {
     }
 
     // PayNow QR
-    public void toPayNowQrDynamicPayload() {
+    public void toPayNowQrDynamicPayload(String clientId, String storeId, String paymentRecordId) {
 
         try {
             secret = new ScbSecret(PaymentMethod.PayNowSecrets);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        country = "SG";
+        currency = "SGD";
+        corpId = "SGQASPL1";
+        pspId = "SGPAYNOW";
+
+        corpRef = paymentRecordId;
+        ref1 = paymentRecordId;
+        ref2 = clientId;
+        ref3 = storeId;
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("ddMMyyyyHHmmss");
+        date = simpleDateFormat.format(new Date());
 
         String data = "amt=" + amount +
                 "&ccy=" + currency +
@@ -158,13 +201,23 @@ public class ScbRequest {
     }
 
     // PayNow QR Soundbox
-    public void toPaynowStaticQrPayload() {
+    public void toPaynowStaticQrPayload(String serialNumber) {
 
         try {
             secret = new ScbSecret(PaymentMethod.PayNowSecrets);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        country = "SG";
+        currency = "SGD";
+        corpId = "SGQASPL1";
+        pspId = "SGPAYNOW";
+
+        ref1 = "QSB-SQR-SG-" + serialNumber;
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("ddMMyyyyHHmmss");
+        date = simpleDateFormat.format(new Date());
 
         String data = "amt=" + amount +
                 "&ccy=" + currency +
@@ -248,4 +301,31 @@ public class ScbRequest {
         return xmlPayload.toString();
 
     }
+
+    // digit and uppercase to 0, lowercase to 1
+    // e.g. "aBc123" -> "101000"
+    public static String convertToCaseBinary(String input) {
+        StringBuilder result = new StringBuilder();
+
+        for (char c : input.toCharArray()) {
+            if (Character.isDigit(c) || Character.isUpperCase(c)) {
+                result.append('0');
+            } else if (Character.isLowerCase(c)) {
+                result.append('1');
+            } else {
+                result.append(c); // Keep other characters unchanged
+            }
+        }
+
+        return result.toString();
+    }
+
+    private static String binaryToBase36(String binary) {
+        // Step 1: Parse the binary string to a BigInteger
+        BigInteger bigInteger = new BigInteger(binary, 2);
+
+        // Step 2: Convert the BigInteger to a Base36 string
+        return bigInteger.toString(36);
+    }
+
 }

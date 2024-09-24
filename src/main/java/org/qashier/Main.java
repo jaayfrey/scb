@@ -13,15 +13,19 @@ public class Main {
 
         boolean __TEST__ = true;
 
-        ScbRequest scbRequest = ScbRequest.builder().amount("fs").currency("SGD")
+        // PayNow soundbox match using serial number "QSB-SQR-SG-38231108740191"
+
+        ScbRequest scbRequest = ScbRequest.builder()
+                .amount("120.00")
+                .opTxnId("test12344")
                 .build();
 
-        scbRequest.toDuitNowQrDynamicPayload();
+        scbRequest.toDuitNowStaticQrPayload("zbN8o8FV3frCHW50picw", "E650wwVC1qVLaOigE5Lf");
 
-        Log.white("\nJSON Request Body: ");
+        Log.white("\nJSON Request Body (DuitNow): ");
         Log.green(scbRequest.toJson());
 
-        Log.white("\nXML Request Body: ");
+        Log.white("\nXML Request Body (PayNow): ");
         Log.purple(scbRequest.toXml());
 
         // testing decryption
