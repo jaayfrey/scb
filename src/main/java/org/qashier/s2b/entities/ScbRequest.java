@@ -222,7 +222,7 @@ public class ScbRequest {
         String data = "amt=" + amount +
                 "&ccy=" + currency +
                 "&corpid=" + corpId +
-                "&corpef=" + corpRef +
+                "&corpref=" + corpRef +
                 "&ctry=" + country +
                 "&date=" + date +
                 "&optxnid=" + opTxnId +

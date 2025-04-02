@@ -16,11 +16,13 @@ public class Main {
         // PayNow soundbox match using serial number "QSB-SQR-SG-38231108740191"
 
         ScbRequest scbRequest = ScbRequest.builder()
-                .amount("120.00")
-                .opTxnId("test12344")
+                .amount("12.00")
+                .opTxnId("202503191661")
                 .build();
 
-        scbRequest.toDuitNowStaticQrPayload("zbN8o8FV3frCHW50picw", "E650wwVC1qVLaOigE5Lf");
+//        scbRequest.toDuitNowStaticQrPayload("lh1d0T74bMjw6JT4WhfQ", "9dyuKursHbpk7BGmt4yz");
+        scbRequest.toPayNowQrDynamicPayload("lh1d0T74bMjw6JT4WhfQ", "9dyuKursHbpk7BGmt4yz", "yQrdOHORbGrpUNujVmLk");
+//        scbRequest.toPaynowStaticQrPayload("38240527940054");
 
         Log.white("\nJSON Request Body (DuitNow): ");
         Log.green(scbRequest.toJson());
